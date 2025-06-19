@@ -1,0 +1,135 @@
+--Esta base esta construida con las reglas que soporta DuckDB
+
+
+CREATE TABLE sucursal (
+    id_sucursal INTEGER NOT NULL PRIMARY KEY,
+    nombre_sucursal VARCHAR NOT NULL,
+    direccion VARCHAR NOT NULL,
+    telefono VARCHAR NOT NULL,
+    comentario VARCHAR
+);
+
+CREATE TABLE empleado (
+    id_empleado INTEGER NOT NULL PRIMARY KEY,
+    nombre VARCHAR NOT NULL,
+    apellido_paterno VARCHAR NOT NULL,
+    apellido_materno VARCHAR,
+    id_sucursal INTEGER,
+    puesto VARCHAR NOT NULL,
+    comentario VARCHAR,
+    FOREIGN KEY (id_sucursal) REFERENCES sucursal(id_sucursal)
+);
+
+CREATE TABLE cliente (
+    id_cliente INTEGER NOT NULL PRIMARY KEY,
+    nombre VARCHAR NOT NULL,
+    apellido_paterno VARCHAR NOT NULL,
+    apellido_materno VARCHAR,
+    direccion VARCHAR NOT NULL,
+    telefono VARCHAR NOT NULL,
+    email VARCHAR,
+    comentario VARCHAR
+);
+
+CREATE TABLE prestamo (
+    id_prestamo INTEGER NOT NULL PRIMARY KEY,
+    id_cliente INTEGER NOT NULL,
+    id_empleado INTEGER NOT NULL,
+    monto_credito DECIMAL(12,2) NOT NULL,
+    monto_intereses DECIMAL(12,2) NOT NULL,
+    monto_comisiones DECIMAL(12,2) NOT NULL,
+    interes_anual DECIMAL(5,2) NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    plazo INTEGER NOT NULL,
+    comentario VARCHAR NOT NULL,
+    estatus_credito VARCHAR DEFAULT 'Activo',
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    FOREIGN KEY (id_empleado) REFERENCES empleado(id_empleado)
+);
+
+CREATE TABLE pago_credito (
+    id_pago INTEGER NOT NULL PRIMARY KEY,
+    id_prestamo INTEGER NOT NULL,
+    monto_credito DECIMAL(12,2),
+    monto_intereses DECIMAL(12,2),
+    monto_comisiones DECIMAL(12,2),
+    fecha_pago DATE NOT NULL,
+    comentario VARCHAR,
+    FOREIGN KEY (id_prestamo) REFERENCES prestamo(id_prestamo)
+);
+
+CREATE TABLE calendario_pago (
+    id_calendario INTEGER NOT NULL PRIMARY KEY,
+    id_prestamo INTEGER NOT NULL,
+    fecha_pago DATE NOT NULL,
+    monto_credito DECIMAL(12,2) NOT NULL,
+    monto_intereses DECIMAL(12,2) NOT NULL,
+    monto_comisiones DECIMAL(12,2) NOT NULL,
+    comentario VARCHAR,
+    FOREIGN KEY (id_prestamo) REFERENCES prestamo(id_prestamo)
+);
+
+CREATE TABLE seguimiento_cobro (
+    id_seguimiento INTEGER NOT NULL PRIMARY KEY,
+    id_prestamo INTEGER NOT NULL,
+    fecha_seguimiento DATE NOT NULL,
+    detalle VARCHAR NOT NULL,
+    comentario VARCHAR,
+    FOREIGN KEY (id_prestamo) REFERENCES prestamo(id_prestamo)
+);
+
+CREATE TABLE tarjeta_credito (
+    id_tarjeta INTEGER NOT NULL PRIMARY KEY,
+    id_cliente INTEGER NOT NULL,
+    limite_credito DECIMAL(12,2) NOT NULL,
+    saldo_actual DECIMAL(12,2) DEFAULT 0 NOT NULL,
+    fecha_emision DATE NOT NULL,
+    fecha_vencimiento DATE NOT NULL,
+    estatus VARCHAR DEFAULT 'Activa',
+    comentario VARCHAR,
+    num_tarjeta VARCHAR NOT NULL,
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente)
+);
+
+CREATE TABLE campana_fidelidad_cliente (
+    id_campana INTEGER NOT NULL PRIMARY KEY,
+    id_cliente INTEGER NOT NULL,
+    nombre VARCHAR NOT NULL,
+    descripcion VARCHAR,
+    fecha_inicio DATE NOT NULL,
+    fecha_fin DATE NOT NULL,
+    objetivo VARCHAR,
+    recompensa VARCHAR,
+    comentario VARCHAR,
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente)
+);
+
+CREATE TABLE movimiento_tarjeta_credito (
+    id_movimiento INTEGER NOT NULL PRIMARY KEY,
+    id_tarjeta INTEGER NOT NULL,
+    fecha_movimiento DATE NOT NULL,
+    tipo_movimiento VARCHAR NOT NULL,
+    monto DECIMAL(12,2) NOT NULL,
+    descripcion VARCHAR,
+    FOREIGN KEY (id_tarjeta) REFERENCES tarjeta_credito(id_tarjeta)
+);
+
+CREATE TABLE dw_historico_saldo (
+    id_historico INTEGER NOT NULL PRIMARY KEY,
+    fecha_cierre DATE NOT NULL,
+    id_cliente INTEGER NOT NULL,
+    id_empleado INTEGER NOT NULL,
+    id_prestamo INTEGER NOT NULL,
+    fecha_inicio DATE NOT NULL,
+    fecha_ultimo_pago DATE,
+    saldo_monto_credito DECIMAL(10,2),
+    saldo_monto_intereses DECIMAL(10,2),
+    saldo_monto_comisiones DECIMAL(10,2),
+    listado_pagos_monto_credito VARCHAR,
+    listado_pagos_monto_intereses VARCHAR,
+    listado_pagos_monto_comisiones VARCHAR,
+    fecha_hora_generacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_cliente) REFERENCES cliente(id_cliente),
+    FOREIGN KEY (id_empleado) REFERENCES empleado(id_empleado),
+    FOREIGN KEY (id_prestamo) REFERENCES prestamo(id_prestamo)
+);
